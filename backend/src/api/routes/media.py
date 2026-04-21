@@ -264,3 +264,33 @@ async def upload_video(request: Request):
     except Exception as e:
         logger.error(f"❌ Error uploading video: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error uploading video: {str(e)}")
+
+
+@router.post("/cookies/upload")
+async def upload_cookies(request: Request, file: UploadFile = File(...)):
+    """Upload a YouTube cookies.txt file (Netscape format) for bot detection bypass."""
+    _get_authenticated_user_id(request)
+
+    if not file.filename or not file.filename.endswith(".txt"):
+        raise HTTPException(status_code=400, detail="Only .txt files are accepted")
+
+    content = await file.read()
+
+    # Basic validation: must look like a Netscape cookie file
+    try:
+        text = content.decode("utf-8")
+    except UnicodeDecodeError:
+        raise HTTPException(status_code=400, detail="File must be a valid UTF-8 text file")
+
+    if "youtube.com" not in text:
+        raise HTTPException(status_code=400, detail="File does not appear to contain YouTube cookies")
+
+    cookies_path = Path("/app/cookies.txt")
+    try:
+        async with aiofiles.open(cookies_path, "wb") as f:
+            await f.write(content)
+        logger.info("✅ YouTube cookies.txt updated successfully")
+        return {"message": "Cookies uploaded successfully"}
+    except Exception as e:
+        logger.error(f"❌ Error saving cookies: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error saving cookies: {str(e)}")

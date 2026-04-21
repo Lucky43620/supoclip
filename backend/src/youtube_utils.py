@@ -74,6 +74,14 @@ class YouTubeDownloader:
             "nocheckcertificate": True,
             "prefer_insecure": False,
             "age_limit": None,
+            # PO Token provider for YouTube bot detection bypass
+            "extractor_args": {
+                "youtubepot-bgutilhttp": {
+                    "base_url": ["http://bgutil-pot-provider:4416"]
+                }
+            },
+            # YouTube cookies for authenticated requests (bypasses IP-level bot detection)
+            "cookiefile": "/app/cookies.txt",
         }
 
         return opts
@@ -93,6 +101,12 @@ def _build_info_options() -> Dict[str, Any]:
             "Connection": "keep-alive",
         },
         "nocheckcertificate": True,
+        "extractor_args": {
+            "youtubepot-bgutilhttp": {
+                "base_url": ["http://bgutil-pot-provider:4416"]
+            }
+        },
+        "cookiefile": "/app/cookies.txt",
     }
     return ydl_opts
 

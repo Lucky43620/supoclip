@@ -1,4 +1,10 @@
 services:
+  bgutil-pot-provider:
+    image: brainicism/bgutil-ytdlp-pot-provider:latest
+    container_name: bgutil-pot-provider
+    init: true
+    restart: unless-stopped
+
   frontend:
     build:
       context: ./frontend
@@ -67,6 +73,7 @@ services:
       - clips:/app/clips
       - ./backend/fonts:/app/fonts
       - ./backend/transitions:/app/transitions
+      - ./backend/cookies.txt:/app/cookies.txt
     environment:
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1
@@ -127,6 +134,7 @@ services:
       - clips:/app/clips
       - ./backend/fonts:/app/fonts
       - ./backend/transitions:/app/transitions
+      - ./backend/cookies.txt:/app/cookies.txt
     environment:
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1

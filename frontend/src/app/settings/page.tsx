@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { signOut, useSession } from "@/lib/auth-client";
 import { track } from "@/lib/datafast";
 import Link from "next/link";
-import { Type, Palette, CheckCircle, AlertCircle, Settings, ArrowLeft, Mail } from "lucide-react";
+import { Type, Palette, CheckCircle, AlertCircle, Settings, ArrowLeft, Mail, Cookie, Info, Upload } from "lucide-react";
 
 interface UserPreferences {
   fontFamily: string;
@@ -37,6 +37,10 @@ export default function SettingsPage() {
   const [fontSize, setFontSize] = useState(24);
   const [fontColor, setFontColor] = useState("#FFFFFF");
   const [completionEmails, setCompletionEmails] = useState(true);
+  const [cookiesFile, setCookiesFile] = useState<File | null>(null);
+  const [isCookiesUploading, setIsCookiesUploading] = useState(false);
+  const [cookiesSuccess, setCookiesSuccess] = useState(false);
+  const [cookiesError, setCookiesError] = useState<string | null>(null);
   const [availableFonts, setAvailableFonts] = useState<Array<{ name: string, display_name: string }>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
@@ -196,6 +200,32 @@ export default function SettingsPage() {
       setError(error instanceof Error ? error.message : 'Failed to save preferences');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCookiesUpload = async () => {
+    if (!cookiesFile) return;
+    setIsCookiesUploading(true);
+    setCookiesError(null);
+    setCookiesSuccess(false);
+    try {
+      const formData = new FormData();
+      formData.append("file", cookiesFile);
+      const response = await fetch("/api/cookies/upload", {
+        method: "POST",
+        body: formData,
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.detail || data.error || "Upload failed");
+      }
+      setCookiesSuccess(true);
+      setCookiesFile(null);
+      setTimeout(() => setCookiesSuccess(false), 4000);
+    } catch (err) {
+      setCookiesError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setIsCookiesUploading(false);
     }
   };
 
@@ -431,6 +461,85 @@ export default function SettingsPage() {
                   onCheckedChange={setCompletionEmails}
                   disabled={isLoading}
                 />
+              </div>
+            </div>
+
+            {/* YouTube Cookies Section */}
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold text-black mb-1 flex items-center gap-2">
+                  <Cookie className="w-5 h-5" />
+                  YouTube Integration
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Upload your YouTube cookies to allow downloading videos without restrictions.
+                </p>
+              </div>
+
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
+                {/* Label + tooltip */}
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm font-medium text-black">
+                    cookies.txt
+                  </Label>
+                  <div className="relative group">
+                    <Info className="w-4 h-4 text-gray-400 cursor-help" />
+                    <div className="absolute left-6 top-[-6px] z-10 hidden group-hover:block w-72 rounded-lg border border-gray-200 bg-white p-3 shadow-lg text-xs text-gray-700 leading-relaxed">
+                      <p className="font-semibold mb-1">Comment obtenir ce fichier ?</p>
+                      <ol className="list-decimal list-inside space-y-1">
+                        <li>Installe l&apos;extension Chrome <span className="font-medium text-black">&quot;Get cookies.txt LOCALLY&quot;</span></li>
+                        <li>Connecte-toi à YouTube dans Chrome</li>
+                        <li>Clique sur l&apos;extension → <span className="font-medium">Export</span></li>
+                        <li>Importe le fichier <span className="font-mono bg-gray-100 px-1 rounded">.txt</span> ici</li>
+                      </ol>
+                      <p className="mt-2 text-gray-500">Ces cookies permettent à SupoClip de télécharger des vidéos YouTube sans être bloqué.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* File input */}
+                <label className="flex items-center gap-3 cursor-pointer w-full">
+                  <div className="flex-1 flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-500 hover:border-gray-400 transition-colors">
+                    <Upload className="w-4 h-4 shrink-0" />
+                    <span className="truncate">
+                      {cookiesFile ? cookiesFile.name : "Sélectionner cookies.txt…"}
+                    </span>
+                  </div>
+                  <input
+                    type="file"
+                    accept=".txt"
+                    className="hidden"
+                    onChange={(e) => {
+                      setCookiesFile(e.target.files?.[0] ?? null);
+                      setCookiesError(null);
+                      setCookiesSuccess(false);
+                    }}
+                  />
+                </label>
+
+                {/* Feedback */}
+                {cookiesSuccess && (
+                  <div className="flex items-center gap-2 text-sm text-green-700">
+                    <CheckCircle className="w-4 h-4" />
+                    Cookies mis à jour avec succès !
+                  </div>
+                )}
+                {cookiesError && (
+                  <div className="flex items-center gap-2 text-sm text-red-600">
+                    <AlertCircle className="w-4 h-4" />
+                    {cookiesError}
+                  </div>
+                )}
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCookiesUpload}
+                  disabled={!cookiesFile || isCookiesUploading}
+                  className="w-full"
+                >
+                  {isCookiesUploading ? "Upload en cours…" : "Mettre à jour les cookies"}
+                </Button>
               </div>
             </div>
 

@@ -30,6 +30,9 @@ RUN uv venv .venv && uv sync
 RUN uv pip install --upgrade --force-reinstall yt-dlp
 RUN uv pip install --upgrade --force-reinstall "yt-dlp[default]"
 
+# Install PO Token provider plugin for YouTube bot detection bypass
+RUN uv pip install bgutil-ytdlp-pot-provider
+
 # Copy source code
 COPY src/ ./src/
 
